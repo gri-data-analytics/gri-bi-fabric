@@ -1,0 +1,945 @@
+{
+  "properties": {
+    "activities": [
+      {
+        "name": "Lookup1",
+        "type": "Lookup",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "source": {
+            "type": "ExcelSource",
+            "storeSettings": {
+              "type": "SharePointOnlineFileStoreReadSettings",
+              "recursive": true,
+              "enablePartitionDiscovery": false
+            }
+          },
+          "firstRowOnly": false,
+          "datasetSettings": {
+            "annotations": [],
+            "type": "Excel",
+            "typeProperties": {
+              "sheetName": "Metadata Input",
+              "location": {
+                "type": "SharePointOnlineFileStoreLocation",
+                "fileName": "control_ingestion_metadata.xlsx",
+                "folderPath": "Documents/control_ingestion_metadata"
+              },
+              "firstRowAsHeader": true
+            },
+            "schema": [],
+            "externalReferences": {
+              "connection": "26bab0ff-8871-42f1-8f24-e16533698c4c"
+            }
+          }
+        }
+      },
+      {
+        "name": "Filter1",
+        "type": "Filter",
+        "dependsOn": [
+          {
+            "activity": "Lookup1",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "typeProperties": {
+          "items": {
+            "value": "@activity('Lookup1').output.value",
+            "type": "Expression"
+          },
+          "condition": {
+            "value": "@and(equals(item().is_active,'1'),equals(item().source,'IFS'))",
+            "type": "Expression"
+          }
+        }
+      },
+      {
+        "name": "ForEach1",
+        "type": "ForEach",
+        "dependsOn": [
+          {
+            "activity": "Filter1",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "typeProperties": {
+          "items": {
+            "value": "@activity('Filter1').output.value",
+            "type": "Expression"
+          },
+          "isSequential": true,
+          "activities": [
+            {
+              "name": "Switch1",
+              "type": "Switch",
+              "dependsOn": [],
+              "typeProperties": {
+                "on": {
+                  "value": "@item().load_type",
+                  "type": "Expression"
+                },
+                "cases": [
+                  {
+                    "value": "APPEND",
+                    "activities": [
+                      {
+                        "name": "Copy_Append",
+                        "type": "Copy",
+                        "state": "Inactive",
+                        "onInactiveMarkAs": "Succeeded",
+                        "dependsOn": [],
+                        "policy": {
+                          "timeout": "0.12:00:00",
+                          "retry": 0,
+                          "retryIntervalInSeconds": 30,
+                          "secureOutput": false,
+                          "secureInput": false
+                        },
+                        "typeProperties": {
+                          "source": {
+                            "type": "AzureSqlSource",
+                            "sqlReaderQuery": {
+                              "value": "@concat(\n  'SELECT * FROM ',\n  item().source_schema,\n  '.',\n  item().source_object,\n  ' WHERE ',\n  item().watermark_column,\n  ' > ''',\n  item().last_watermark_value,\n  ''''\n)",
+                              "type": "Expression"
+                            },
+                            "queryTimeout": "02:00:00",
+                            "partitionOption": "None",
+                            "datasetSettings": {
+                              "annotations": [],
+                              "type": "AzureSqlTable",
+                              "schema": [],
+                              "typeProperties": {
+                                "database": "sqldb-fabric-lab"
+                              },
+                              "externalReferences": {
+                                "connection": "241fe421-3527-427b-a9ce-60659c82da0a"
+                              }
+                            }
+                          },
+                          "sink": {
+                            "type": "LakehouseTableSink",
+                            "tableActionOption": "Append",
+                            "applyVOrder": false,
+                            "datasetSettings": {
+                              "annotations": [],
+                              "linkedService": {
+                                "name": "LH_Param_Demo",
+                                "properties": {
+                                  "annotations": [],
+                                  "type": "Lakehouse",
+                                  "typeProperties": {
+                                    "workspaceId": "8b9e9590-f406-49ee-a8fa-43321bf8d391",
+                                    "artifactId": "086407fd-b321-4254-b11b-0f2c1677636c",
+                                    "rootFolder": "Tables"
+                                  }
+                                }
+                              },
+                              "type": "LakehouseTable",
+                              "schema": [],
+                              "typeProperties": {
+                                "schema": "dbo",
+                                "table": {
+                                  "value": "@item().target_table",
+                                  "type": "Expression"
+                                }
+                              }
+                            }
+                          },
+                          "enableStaging": false,
+                          "translator": {
+                            "type": "TabularTranslator",
+                            "typeConversion": true,
+                            "typeConversionSettings": {
+                              "allowDataTruncation": true,
+                              "treatBooleanAsNumber": false
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "name": "Event_log_Append",
+                        "type": "TridentNotebook",
+                        "state": "Inactive",
+                        "onInactiveMarkAs": "Succeeded",
+                        "dependsOn": [
+                          {
+                            "activity": "Copy_Append",
+                            "dependencyConditions": [
+                              "Succeeded"
+                            ]
+                          }
+                        ],
+                        "policy": {
+                          "timeout": "0.12:00:00",
+                          "retry": 0,
+                          "retryIntervalInSeconds": 30,
+                          "secureOutput": false,
+                          "secureInput": false
+                        },
+                        "typeProperties": {
+                          "notebookId": "c8e55823-cb6b-4ef9-8653-f86f62d98603",
+                          "workspaceId": "05b79c84-fc25-4b45-b68f-310c32f96218",
+                          "parameters": {
+                            "pipeline_name": {
+                              "value": {
+                                "value": "@pipeline().Pipeline",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "activity_name": {
+                              "value": {
+                                "value": "Copy_Append",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "source_table": {
+                              "value": {
+                                "value": "@item().source_table",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "target_table": {
+                              "value": {
+                                "value": "@item().target_table",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "load_type": {
+                              "value": {
+                                "value": "@item().load_type",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "read_count": {
+                              "value": {
+                                "value": "@string(activity('Copy_Append').output.rowsRead)",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "write_count": {
+                              "value": {
+                                "value": "@string(activity('Copy_Append').output.rowsCopied)",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "start_time": {
+                              "value": {
+                                "value": "@string(activity('Copy_Append').output.executionDetails[0].start)",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "activity_start_time": {
+                              "value": {
+                                "value": "@string(activity('Copy_Append').output.executionDetails[0].start)",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "activity_end_time": {
+                              "value": {
+                                "value": "@utcNow()",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "name": "Error_log_Append",
+                        "type": "TridentNotebook",
+                        "state": "Inactive",
+                        "onInactiveMarkAs": "Succeeded",
+                        "dependsOn": [
+                          {
+                            "activity": "Copy_Append",
+                            "dependencyConditions": [
+                              "Failed"
+                            ]
+                          }
+                        ],
+                        "policy": {
+                          "timeout": "0.12:00:00",
+                          "retry": 0,
+                          "retryIntervalInSeconds": 30,
+                          "secureOutput": false,
+                          "secureInput": false
+                        },
+                        "typeProperties": {
+                          "notebookId": "63530a85-e0e4-4caf-aed0-fdfdf56fca66",
+                          "workspaceId": "05b79c84-fc25-4b45-b68f-310c32f96218",
+                          "parameters": {
+                            "pipeline_name": {
+                              "value": {
+                                "value": "@pipeline().Pipeline",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "activity_name": {
+                              "value": {
+                                "value": "Copy_Append",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "source_table": {
+                              "value": {
+                                "value": "@item().source_table",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "target_table": {
+                              "value": {
+                                "value": "@item().target_table",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "load_type": {
+                              "value": {
+                                "value": "@item().load_type",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "error_code": {
+                              "value": {
+                                "value": "@activity('Copy_Append').error.errorCode",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "error_message": {
+                              "value": {
+                                "value": "@activity('Copy_Append').error.message",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "activity_start_time": {
+                              "value": {
+                                "value": "@utcNow()",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "activity_end_time": {
+                              "value": {
+                                "value": "@utcNow()",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "value": "UPSERT",
+                    "activities": [
+                      {
+                        "name": "Copy_Upsert",
+                        "type": "Copy",
+                        "state": "Inactive",
+                        "onInactiveMarkAs": "Succeeded",
+                        "dependsOn": [],
+                        "policy": {
+                          "timeout": "0.12:00:00",
+                          "retry": 0,
+                          "retryIntervalInSeconds": 30,
+                          "secureOutput": false,
+                          "secureInput": false
+                        },
+                        "typeProperties": {
+                          "source": {
+                            "type": "AzureSqlSource",
+                            "sqlReaderQuery": {
+                              "value": "@concat(\n  'SELECT * FROM ',\n  item().source_schema,\n  '.',\n  item().source_object,\n  ' WHERE ',\n  item().watermark_column,\n  ' > ''',\n  item().last_watermark_value,\n  ''''\n)",
+                              "type": "Expression"
+                            },
+                            "queryTimeout": "02:00:00",
+                            "partitionOption": "None",
+                            "datasetSettings": {
+                              "annotations": [],
+                              "type": "AzureSqlTable",
+                              "schema": [],
+                              "typeProperties": {
+                                "database": "sqldb-fabric-lab"
+                              },
+                              "externalReferences": {
+                                "connection": "241fe421-3527-427b-a9ce-60659c82da0a"
+                              }
+                            }
+                          },
+                          "sink": {
+                            "type": "LakehouseTableSink",
+                            "tableActionOption": "Upsert",
+                            "upsertSettings": {
+                              "keys": {
+                                "value": "@item().primary_key",
+                                "type": "Expression"
+                              }
+                            },
+                            "applyVOrder": false,
+                            "datasetSettings": {
+                              "annotations": [],
+                              "linkedService": {
+                                "name": "LH_Param_Demo",
+                                "properties": {
+                                  "annotations": [],
+                                  "type": "Lakehouse",
+                                  "typeProperties": {
+                                    "workspaceId": "8b9e9590-f406-49ee-a8fa-43321bf8d391",
+                                    "artifactId": "086407fd-b321-4254-b11b-0f2c1677636c",
+                                    "rootFolder": "Tables"
+                                  }
+                                }
+                              },
+                              "type": "LakehouseTable",
+                              "schema": [],
+                              "typeProperties": {
+                                "schema": "dbo",
+                                "table": {
+                                  "value": "@item().target_table",
+                                  "type": "Expression"
+                                }
+                              }
+                            }
+                          },
+                          "enableStaging": false,
+                          "translator": {
+                            "type": "TabularTranslator",
+                            "typeConversion": true,
+                            "typeConversionSettings": {
+                              "allowDataTruncation": true,
+                              "treatBooleanAsNumber": false
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "name": "Event_log_Upsert",
+                        "type": "TridentNotebook",
+                        "state": "Inactive",
+                        "onInactiveMarkAs": "Succeeded",
+                        "dependsOn": [
+                          {
+                            "activity": "Copy_Upsert",
+                            "dependencyConditions": [
+                              "Succeeded"
+                            ]
+                          }
+                        ],
+                        "policy": {
+                          "timeout": "0.12:00:00",
+                          "retry": 0,
+                          "retryIntervalInSeconds": 30,
+                          "secureOutput": false,
+                          "secureInput": false
+                        },
+                        "typeProperties": {
+                          "notebookId": "c8e55823-cb6b-4ef9-8653-f86f62d98603",
+                          "workspaceId": "05b79c84-fc25-4b45-b68f-310c32f96218",
+                          "parameters": {
+                            "pipeline_name": {
+                              "value": {
+                                "value": "@pipeline().Pipeline",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "activity_name": {
+                              "value": {
+                                "value": "Copy_Upsert",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "source_table": {
+                              "value": {
+                                "value": "@item().source_table",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "target_table": {
+                              "value": {
+                                "value": "@item().target_table",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "load_type": {
+                              "value": {
+                                "value": "@item().load_type",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "read_count": {
+                              "value": {
+                                "value": "@string(activity('Copy_Upsert').output.rowsRead)",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "write_count": {
+                              "value": {
+                                "value": "@string(activity('Copy_Upsert').output.rowsCopied)",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "start_time": {
+                              "value": {
+                                "value": "@string(activity('Copy_Upsert').output.executionDetails[0].start)",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "activity_start_time": {
+                              "value": {
+                                "value": "@string(activity('Copy_Upsert').output.executionDetails[0].start)",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "activity_end_time": {
+                              "value": {
+                                "value": "@utcNow()",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "name": "Error_log_Upsert",
+                        "type": "TridentNotebook",
+                        "state": "Inactive",
+                        "onInactiveMarkAs": "Succeeded",
+                        "dependsOn": [
+                          {
+                            "activity": "Copy_Upsert",
+                            "dependencyConditions": [
+                              "Failed"
+                            ]
+                          }
+                        ],
+                        "policy": {
+                          "timeout": "0.12:00:00",
+                          "retry": 0,
+                          "retryIntervalInSeconds": 30,
+                          "secureOutput": false,
+                          "secureInput": false
+                        },
+                        "typeProperties": {
+                          "notebookId": "63530a85-e0e4-4caf-aed0-fdfdf56fca66",
+                          "workspaceId": "05b79c84-fc25-4b45-b68f-310c32f96218",
+                          "parameters": {
+                            "pipeline_name": {
+                              "value": {
+                                "value": "@pipeline().Pipeline",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "activity_name": {
+                              "value": {
+                                "value": "Copy_Upsert",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "source_table": {
+                              "value": {
+                                "value": "@item().source_table",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "target_table": {
+                              "value": {
+                                "value": "@item().target_table",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "load_type": {
+                              "value": {
+                                "value": "@item().load_type",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "error_code": {
+                              "value": {
+                                "value": "@activity('Copy_Upsert').error.errorCode",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "error_message": {
+                              "value": {
+                                "value": "@activity('Copy_Upsert').error.message",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "activity_start_time": {
+                              "value": {
+                                "value": "@utcNow()",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "activity_end_time": {
+                              "value": {
+                                "value": "@utcNow()",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "value": "OVERWRITE",
+                    "activities": [
+                      {
+                        "name": "Copy_Overwrite",
+                        "type": "Copy",
+                        "dependsOn": [],
+                        "policy": {
+                          "timeout": "0.12:00:00",
+                          "retry": 0,
+                          "retryIntervalInSeconds": 30,
+                          "secureOutput": false,
+                          "secureInput": false
+                        },
+                        "typeProperties": {
+                          "source": {
+                            "type": "OracleSource",
+                            "partitionOption": "None",
+                            "numberPrecision": 38,
+                            "numberScale": 18,
+                            "queryTimeout": "02:00:00",
+                            "datasetSettings": {
+                              "annotations": [],
+                              "type": "OracleTable",
+                              "schema": [],
+                              "typeProperties": {
+                                "schema": {
+                                  "value": "@item().source_schema",
+                                  "type": "Expression"
+                                },
+                                "table": {
+                                  "value": "@item().source_table",
+                                  "type": "Expression"
+                                }
+                              },
+                              "externalReferences": {
+                                "connection": "@item().connection_id"
+                              }
+                            }
+                          },
+                          "sink": {
+                            "type": "LakehouseTableSink",
+                            "tableActionOption": "OverwriteSchema",
+                            "partitionOption": "None",
+                            "applyVOrder": false,
+                            "datasetSettings": {
+                              "annotations": [],
+                              "linkedService": {
+                                "name": "15c8c447_3ceb_4d6b_8e8c_a5bbcba00d6b",
+                                "properties": {
+                                  "annotations": [],
+                                  "type": "Lakehouse",
+                                  "typeProperties": {
+                                    "workspaceId": "@item().Workspace",
+                                    "artifactId": "@item().Lakehouse",
+                                    "rootFolder": "Tables"
+                                  }
+                                }
+                              },
+                              "type": "LakehouseTable",
+                              "schema": [],
+                              "typeProperties": {
+                                "schema": {
+                                  "value": "@item().target_schema",
+                                  "type": "Expression"
+                                },
+                                "table": {
+                                  "value": "@item().target_table",
+                                  "type": "Expression"
+                                }
+                              }
+                            }
+                          },
+                          "enableStaging": false,
+                          "translator": {
+                            "type": "TabularTranslator",
+                            "typeConversion": true,
+                            "typeConversionSettings": {
+                              "allowDataTruncation": true,
+                              "treatBooleanAsNumber": false
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "name": "Event_log_Overwrite",
+                        "type": "TridentNotebook",
+                        "dependsOn": [
+                          {
+                            "activity": "Copy_Overwrite",
+                            "dependencyConditions": [
+                              "Succeeded"
+                            ]
+                          }
+                        ],
+                        "policy": {
+                          "timeout": "0.12:00:00",
+                          "retry": 0,
+                          "retryIntervalInSeconds": 30,
+                          "secureOutput": false,
+                          "secureInput": false
+                        },
+                        "typeProperties": {
+                          "notebookId": {
+                            "value": "@item().Eventlog",
+                            "type": "Expression"
+                          },
+                          "workspaceId": {
+                            "value": "@item().Workspace",
+                            "type": "Expression"
+                          },
+                          "parameters": {
+                            "pipeline_name": {
+                              "value": {
+                                "value": "@pipeline().parameters.PipelineName",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "activity_name": {
+                              "value": {
+                                "value": "Copy_Overwrite",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "source_table": {
+                              "value": {
+                                "value": "@item().source_table",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "target_table": {
+                              "value": {
+                                "value": "@item().target_table",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "load_type": {
+                              "value": {
+                                "value": "@item().load_type",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "read_count": {
+                              "value": {
+                                "value": "@string(activity('Copy_Overwrite').output.rowsRead)",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "write_count": {
+                              "value": {
+                                "value": "@string(activity('Copy_Overwrite').output.rowsCopied)",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "start_time": {
+                              "value": {
+                                "value": "@string(activity('Copy_Overwrite').output.executionDetails[0].start)",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "activity_start_time": {
+                              "value": {
+                                "value": "@formatDateTime(convertTimeZone(activity('Copy_Overwrite').output.executionDetails[0].start,'UTC','Sri Lanka Standard Time'),'yyyy-MM-dd hh:mm:ss tt')",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "activity_end_time": {
+                              "value": {
+                                "value": "@formatDateTime(convertTimeZone(utcNow(),'UTC','Sri Lanka Standard Time'),'yyyy-MM-dd hh:mm:ss tt')",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "name": "Error_log_overwrite",
+                        "type": "TridentNotebook",
+                        "dependsOn": [
+                          {
+                            "activity": "Copy_Overwrite",
+                            "dependencyConditions": [
+                              "Failed"
+                            ]
+                          }
+                        ],
+                        "policy": {
+                          "timeout": "0.12:00:00",
+                          "retry": 0,
+                          "retryIntervalInSeconds": 30,
+                          "secureOutput": false,
+                          "secureInput": false
+                        },
+                        "typeProperties": {
+                          "notebookId": {
+                            "value": "@item().Errorlog",
+                            "type": "Expression"
+                          },
+                          "workspaceId": {
+                            "value": "@item().Lakehouse",
+                            "type": "Expression"
+                          },
+                          "parameters": {
+                            "pipeline_name": {
+                              "value": {
+                                "value": "@pipeline().parameters.PipelineName",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "activity_name": {
+                              "value": {
+                                "value": "Copy_Overwrite",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "source_table": {
+                              "value": {
+                                "value": "@item().source_table",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "target_table": {
+                              "value": {
+                                "value": "@item().target_table",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "load_type": {
+                              "value": {
+                                "value": "@item().load_type",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "error_code": {
+                              "value": {
+                                "value": "@activity('Copy_Overwrite').error.errorCode",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "error_message": {
+                              "value": {
+                                "value": "@activity('Copy_Overwrite').error.message",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "activity_start_time": {
+                              "value": {
+                                "value": "@formatDateTime(convertTimeZone(utcNow(),'UTC','Sri Lanka Standard Time'),'yyyy-MM-dd hh:mm:ss tt')",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            },
+                            "activity_end_time": {
+                              "value": {
+                                "value": "@formatDateTime(convertTimeZone(utcNow(),'UTC','Sri Lanka Standard Time'),'yyyy-MM-dd hh:mm:ss tt')",
+                                "type": "Expression"
+                              },
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "defaultActivities": []
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "parameters": {
+      "PipelineName": {
+        "type": "string",
+        "defaultValue": "pipeline_IFS"
+      }
+    },
+    "variables": {
+      "read_count": {
+        "type": "String"
+      },
+      "write_count": {
+        "type": "String"
+      },
+      "activity_start_time": {
+        "type": "String"
+      },
+      "activity_end_time": {
+        "type": "String"
+      },
+      "source_table_name": {
+        "type": "String"
+      }
+    }
+  }
+}
