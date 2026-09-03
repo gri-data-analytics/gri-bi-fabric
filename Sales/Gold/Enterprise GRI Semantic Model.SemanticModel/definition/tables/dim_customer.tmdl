@@ -1,0 +1,74 @@
+table dim_customer
+	lineageTag: ca4271a7-c0b4-4924-9769-0114e4ef2269
+	sourceLineageTag: [gold].[dim_customer]
+
+	column Customer_ID
+		dataType: string
+		lineageTag: e5736744-69d0-4939-b6de-3e2aaec81f44
+		sourceLineageTag: Customer_ID
+		summarizeBy: none
+		sourceColumn: Customer_ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column Customer_Name
+		dataType: string
+		lineageTag: b6b3b32a-a970-4a90-a1d0-591758b1beaf
+		sourceLineageTag: Customer_Name
+		summarizeBy: none
+		sourceColumn: Customer_Name
+
+		annotation SummarizationSetBy = Automatic
+
+	column Country
+		dataType: string
+		lineageTag: 1cd62873-568c-49df-97f3-8fd949ec9f56
+		sourceLineageTag: Country
+		summarizeBy: none
+		sourceColumn: Country
+
+		annotation SummarizationSetBy = Automatic
+
+	column Customer_Segment
+		dataType: string
+		lineageTag: 1e93f7af-848f-403c-b5e9-08436a5bedde
+		sourceLineageTag: Customer_Segment
+		summarizeBy: none
+		sourceColumn: Customer_Segment
+
+		annotation SummarizationSetBy = Automatic
+
+	column Location
+		dataType: string
+		lineageTag: b278a17f-0240-45af-8666-4694a8ecd7ad
+		sourceLineageTag: Location
+		summarizeBy: none
+		sourceColumn: Location
+
+		annotation SummarizationSetBy = Automatic
+
+	column Region
+		dataType: string
+		lineageTag: e42025ff-ff13-47cf-aa42-41514514bdbd
+		sourceLineageTag: Region
+		summarizeBy: none
+		sourceColumn: Region
+
+		annotation SummarizationSetBy = Automatic
+
+	column SubRegion
+		dataType: string
+		lineageTag: abd02db6-2467-4c40-aeb7-2de1ba7db082
+		sourceLineageTag: SubRegion
+		summarizeBy: none
+		sourceColumn: SubRegion
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_customer = entity
+		mode: directLake
+		source
+			entityName: dim_customer
+			schemaName: gold
+			expressionSource: 'DirectLake - LH_Param_Demo'
+

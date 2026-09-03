@@ -1,0 +1,72 @@
+{
+  "properties": {
+    "activities": [
+      {
+        "type": "Copy",
+        "typeProperties": {
+          "source": {
+            "type": "OracleSource",
+            "oracleReaderQuery": "SELECT \n    o.CF$_SHIPMENT_ID, \n    o.CF$_AC_SO_NO, \n    o.CF$_AC_SO_LINE_NO, \n    o.CF$_AC_PO_NO,\n    s.SHIP_DATE, \n    s.ORDER_NO, \n    s.CF$_SHIP_DATE,\n    o.SHIPMENT_STATE \nFROM \n    ifsapp.shipment_order_line_ovw_cfv o \nLEFT JOIN \n    ifsapp.shipment_cfv s\n    ON o.CF$_SHIPMENT_ID = s.SHIPMENT_ID\nWHERE \n    o.CF$_CREATE_DATE > TO_DATE('2025-01-01', 'YYYY-MM-DD')",
+            "queryTimeout": "02:00:00",
+            "partitionOption": "None",
+            "numberPrecision": 38,
+            "numberScale": 18,
+            "datasetSettings": {
+              "type": "OracleTable",
+              "schema": [],
+              "externalReferences": {
+                "connection": "67a2a451-5997-4aa6-8b1d-0e37e9ef1d42"
+              },
+              "annotations": []
+            }
+          },
+          "sink": {
+            "type": "LakehouseTableSink",
+            "tableActionOption": "OverwriteSchema",
+            "applyVOrder": false,
+            "partitionOption": "None",
+            "datasetSettings": {
+              "type": "LakehouseTable",
+              "typeProperties": {
+                "schema": "bronze",
+                "table": "bronze_ifs_IFS_Shipment"
+              },
+              "schema": [],
+              "linkedService": {
+                "name": "LH_Param_Demo",
+                "properties": {
+                  "type": "Lakehouse",
+                  "typeProperties": {
+                    "artifactId": "1677636c-0f2c-b11b-4254-b321086407fd",
+                    "workspaceId": "00000000-0000-0000-0000-000000000000",
+                    "rootFolder": "Tables"
+                  },
+                  "annotations": []
+                }
+              },
+              "annotations": []
+            }
+          },
+          "translator": {
+            "type": "TabularTranslator",
+            "typeConversion": true,
+            "typeConversionSettings": {
+              "allowDataTruncation": true,
+              "treatBooleanAsNumber": false
+            }
+          },
+          "enableStaging": false
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Copy IFS Shipment Query",
+        "dependsOn": []
+      }
+    ]
+  }
+}

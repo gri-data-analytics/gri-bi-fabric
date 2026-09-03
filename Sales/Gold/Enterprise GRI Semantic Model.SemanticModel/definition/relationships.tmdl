@@ -1,0 +1,24 @@
+relationship b02cbda9-3ce8-17b9-6ec4-d9673419b889
+	fromColumn: fact_budget.Budget_Month
+	toColumn: dim_date.Date
+
+relationship a36002a8-8bf1-675c-003d-3c6ead45d9f1
+	fromColumn: fact_invoice.Customer_ID
+	toColumn: dim_customer.Customer_ID
+
+relationship 4e8980ff-5c1b-e5ef-d546-c8b98d332548
+	fromColumn: fact_invoice.Business_Unit
+	toColumn: dim_business_unit.Business_Unit
+
+relationship 74b5eb83-2a19-bdab-86a7-9b81634e8d81
+	fromColumn: fact_invoice.Salesperson_ID
+	toColumn: dim_salesperson.SalespersonID
+
+relationship f4f56158-9582-76cc-2105-72aa60470670
+	fromColumn: fact_invoice.Product_ID
+	toColumn: dim_product.InventoryID
+
+relationship 88c1bd08-5b24-b8c4-25ee-a5586a369839
+	fromColumn: fact_invoice.Invoice_Date
+	toColumn: dim_date.Date
+

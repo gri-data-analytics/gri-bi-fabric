@@ -1,0 +1,66 @@
+{
+  "properties": {
+    "jobMode": "Batch",
+    "source": {
+      "type": "OracleTable",
+      "connectionSettings": {
+        "type": "Oracle",
+        "externalReferences": {
+          "connection": "67a2a451-5997-4aa6-8b1d-0e37e9ef1d42"
+        }
+      }
+    },
+    "destination": {
+      "type": "LakehouseTable",
+      "connectionSettings": {
+        "type": "Lakehouse",
+        "typeProperties": {
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "artifactId": "1677636c-0f2c-b11b-4254-b321086407fd",
+          "rootFolder": "Tables"
+        }
+      }
+    },
+    "policy": {
+      "timeout": "0.12:00:00",
+      "retry": 0
+    }
+  },
+  "activities": [
+    {
+      "id": "7bd3326f-d6c4-47d4-a09c-ed8889a6b1cc",
+      "properties": {
+        "source": {
+          "datasetSettings": {
+            "querySettings": {
+              "queryName": "Customer(IFS) Ingestion",
+              "query": "       Select \r\ndistinct a.CUSTOMER_ID as CustometID,\r\na.NAME as CustomerName,\r\ncase when a.CUSTOMER_ID in ( 'CS0193', 'CS0371') then 'REST OF THE WORLD' when b.CF$_REGION_DESCRIPTION is null then 'ASIA PACIFIC' else b.CF$_REGION_DESCRIPTION end as Region,\r\na.COUNTRY as CountryName,\r\na.CF$_CUSTOMER_CATEGORY as CustomerSegment\r\nfrom ifsapp.customer_info_cfv a left join\r\n(select distinct IDENTITY,cf$_region_description from ifsapp.customer_order_inv_join_cfv where cf$_region_description is not null) b\r\non a.CUSTOMER_ID = b.IDENTITY where  \r\n  (COUNTRY = 'SRI LANKA' or a.CUSTOMER_ID  in ('CS0371', 'CS0193'))\r\n and a.CF$_CUSTOMER_CATEGORY  is not null\r\nunion all \r\nSelect \r\ndistinct a.CUSTOMER_ID as CustometID,\r\na.NAME as CustomerName,\r\n'ASIA PACIFIC' as Region,\r\na.COUNTRY as CountryName,\r\na.CF$_CUSTOMER_CATEGORY as CustomerSegment\r\nfrom ifsapp.customer_info_cfv a  where  \r\n  a.CUSTOMER_ID  = 'CS0286'\r\n"
+            }
+          },
+          "partitionSettings": {
+            "partitionOption": "None"
+          }
+        },
+        "destination": {
+          "partitionOption": "None",
+          "writeBehavior": "Overwrite",
+          "datasetSettings": {
+            "schema": "bronze",
+            "table": "bronze_ifs_Customer"
+          },
+          "applyVOrder": false
+        },
+        "enableStaging": false,
+        "translator": {
+          "type": "TabularTranslator"
+        },
+        "typeConversionSettings": {
+          "typeConversion": {
+            "allowDataTruncation": true,
+            "treatBooleanAsNumber": false
+          }
+        }
+      }
+    }
+  ]
+}

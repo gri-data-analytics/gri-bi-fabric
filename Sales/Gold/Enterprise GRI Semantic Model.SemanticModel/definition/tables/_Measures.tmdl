@@ -1,0 +1,283 @@
+table _Measures
+	lineageTag: fd4c15fb-864a-4034-9ea5-3fc4ac6ad6a9
+
+	measure 'Actual Invoiced Sales (USD k)' =
+			
+			SUM ( fact_invoice[Invoice_Value_Thousands] )
+		displayFolder: Invoice
+		lineageTag: e2798e1e-1666-4b7c-a9c0-7bafccb4f3b5
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Actual Invoiced Sales (Local)' =
+			
+			SUM ( fact_invoice[Invoice_Value] )
+		displayFolder: Invoice
+		lineageTag: c42680ec-b850-4871-9ab2-0cb56e037606
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Actual Invoiced Quantity (MT)' =
+			
+			SUM ( fact_invoice[Weight_MetricTons] )
+		displayFolder: Invoice
+		lineageTag: 4e86b566-dccf-457e-bff7-b46c345af62b
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Planned Supply Sales (SPLY)' =
+			
+			CALCULATE (
+			    SUM ( fact_invoice[Invoice_Value_Thousands] ),
+			    SAMEPERIODLASTYEAR ( Dim_Date[Date] )
+			)
+		displayFolder: Invoice
+		lineageTag: a1e815ff-37e1-4b23-863a-b96c55868f29
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Invoice vs SPLY Variance % (MTD)' =
+			
+			IF (
+			    ISBLANK ( SUM ( fact_invoice[Invoice_Value] ) ) && ISBLANK ( [Planned Supply Sales (SPLY)] ),
+			    BLANK (),
+			    IFERROR (
+			        SUM ( fact_invoice[Invoice_Value] ) / [Planned Supply Sales (SPLY)] - 1,
+			        0
+			    )
+			)
+		displayFolder: Invoice
+		lineageTag: 6dbdcbe1-1206-46f2-98a5-ed93806bc2d1
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'YTD Actual Invoiced Sales (USD)' =
+			
+			VAR SelectedFiscalYear = SELECTEDVALUE ( Dim_Date[FiscalYear] )
+			RETURN
+			CALCULATE (
+			    SUM ( fact_invoice[Invoice_Value_Thousands] ),
+			    FILTER (
+			        ALL ( Dim_Date ),
+			        Dim_Date[FiscalYear] = SelectedFiscalYear &&
+			        Dim_Date[Date] <= MAX ( Dim_Date[Date] )
+			    )
+			)
+		displayFolder: Invoice
+		lineageTag: 32cc4deb-45a1-4090-803c-dd1623d06214
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'YTD Planned Supply Sales (USD)' =
+			
+			VAR SelectedFiscalYear = SELECTEDVALUE ( Dim_Date[FiscalYear] )
+			RETURN
+			CALCULATE (
+			    [Planned Supply Sales (SPLY)],
+			    FILTER (
+			        ALL ( Dim_Date ),
+			        Dim_Date[FiscalYear] = SelectedFiscalYear &&
+			        Dim_Date[Date] <= MAX ( Dim_Date[Date] )
+			    )
+			)
+		displayFolder: Invoice
+		lineageTag: 397b6a15-0849-4d58-8130-942751dd6d3b
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Invoice vs SPLY Variance % (YTD)' =
+			
+			IFERROR (
+			    IF (
+			        ISBLANK ( [YTD Actual Invoiced Sales (USD)] ) && ISBLANK ( [YTD Planned Supply Sales (USD)] ),
+			        BLANK (),
+			        [YTD Actual Invoiced Sales (USD)] / [YTD Planned Supply Sales (USD)] - 1
+			    ),
+			    0
+			)
+		displayFolder: Invoice
+		lineageTag: f0118e2e-42a6-420e-a6bd-6162bc31bcd5
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Sales Growth %' =
+			
+			VAR CurrentPeriodSales = SUM ( fact_invoice[Invoice_Value] )
+			VAR PreviousPeriodSales =
+			    CALCULATE (
+			        SUM ( fact_invoice[Invoice_Value] ),
+			        DATEADD ( Dim_Date[Date], -1, MONTH )
+			    )
+			RETURN
+			IF (
+			    ISBLANK ( PreviousPeriodSales ) || PreviousPeriodSales = 0,
+			    BLANK (),
+			    ( CurrentPeriodSales - PreviousPeriodSales ) / PreviousPeriodSales
+			)
+		displayFolder: Invoice
+		lineageTag: b3048d71-b060-404d-b1e4-65b08e467706
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Budgeted Sales Amount' =
+			
+			SUM ( fact_budget[Sales_Budget_Amount] )
+		displayFolder: Budget
+		lineageTag: ed680055-2ca4-452e-ad90-060e36e80828
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Budgeted Sales Amount (USD k)' =
+			
+			SUM ( fact_budget[Sales_BudAmt_k])
+		displayFolder: Budget
+		lineageTag: 61491ec9-7e54-46ec-ac69-1f442b5eec3f
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Budgeted Quantity (MT)' =
+			
+			SUM ( fact_budget[Weight_MT])
+		displayFolder: Budget
+		lineageTag: b172e81e-9399-4ef2-8edb-5f36f2d7c832
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Invoice vs Budget Variance ($)' =
+			
+			SUM ( fact_invoice[Invoice_Value] ) - SUM ( fact_budget[Sales_Budget_Amount] )
+		displayFolder: Budget
+		lineageTag: 36e16480-67ec-45f3-80a6-4f00cb80f0c0
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'YTD Target Inv $ k' =
+			
+			VAR SelectedFiscalYear = SELECTEDVALUE ( dim_date[FiscalYear] )
+			RETURN
+			CALCULATE (
+			    SUM ( fact_budget[Sales_BudAmt_k] ),
+			    FILTER (
+			        ALL ( dim_date ),
+			        dim_date[FiscalYear] = SelectedFiscalYear
+			            && dim_date[Date] <= MAX ( dim_date[Date] )
+			    )
+			)
+		displayFolder: Budget
+		lineageTag: f9dc5be3-3b74-4d64-8079-87b48e5a26b1
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Invoice vs Budget Variance' =
+			
+			SUM ( fact_invoice[Invoice_Value] ) - SUM ( fact_budget[Sales_Budget_Amount] )
+		displayFolder: Invoice
+		lineageTag: a47773fb-4371-4c2d-86ed-2b4869d8331a
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Invoice vs Budget Varience % MT' =
+			
+			DIVIDE (
+			    SUM ( fact_invoice[Weight_MetricTons] ) - SUM ( fact_budget[Weight_MT] ),
+			    SUM ( fact_invoice[Weight_MetricTons] ),
+			    0
+			)
+		displayFolder: Invoice
+		lineageTag: e2be1ab9-faec-4bdb-9f5e-f3ef0c0ce83d
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Invoiced Ach%' =
+			
+			DIVIDE (
+			    SUM ( fact_invoice[Invoice_Value] ),
+			    SUM ( fact_budget[Sales_Budget_Amount] )
+			)
+		displayFolder: Invoice
+		lineageTag: 78a5e344-f107-4df8-bc38-a0cf022f73f6
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Sales LY' =
+			
+			CALCULATE (
+			    SUM ( 'fact_invoice'[Invoice_Value] ),
+			    SAMEPERIODLASTYEAR ( dim_date[Date] )
+			)
+		lineageTag: 238a032c-7fc8-4346-9f63-f61bafaa4254
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Total Sales' =
+			
+			SUM('fact_invoice'[Invoice_Value])
+		lineageTag: e02f2969-cb63-4804-87de-39c87d5ff411
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Sales Growthhhh %' =
+			
+			DIVIDE(
+			    [Total Sales] - [Sales LY],
+			    [Sales LY],
+			    0
+			)
+		lineageTag: edf2e674-709c-422d-9428-e442845e65b2
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Growth Arrow' =
+			
+			IF(
+			    [Sales Growthhhh %] >= 0,
+			    "▲",
+			    "▼"
+			)
+		displayFolder: Cards
+		lineageTag: e82260bf-4d08-493f-a391-f3b48dc89647
+
+	measure 'Growth Text' =
+			
+			VAR Growth =
+			FORMAT([Sales Growthhhh %],"0.00%")
+			RETURN
+			"vs LY " &
+			[Growth Arrow] &
+			" " &
+			Growth
+		displayFolder: Cards
+		lineageTag: 5bc2784d-d367-4e85-9df1-e3475058a322
+
+	measure 'Growth Color' =
+			
+			IF(
+			    [Sales Growth %] >= 0,
+			    "#008000",
+			    "#FF0000"
+			)
+		displayFolder: Cards
+		lineageTag: 3b6aa83d-9ef7-4426-9f59-91ce1c8cc7de
+
+	measure 'Test Total Sales' = SUM(fact_invoice[Invoice_Value])
+		lineageTag: 71ce6b46-ea12-47a5-8ca6-475e13b1e899
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'place holder'
+		formatString: 0
+		lineageTag: ce80810b-afa6-44d8-ab61-f1ccf33cf25d
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [place holder]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition _Measures = calculated
+		mode: import
+		source = Row("place holder", BLANK())
+
+	annotation PBI_Id = 025bad25908446fa8ddc538ed022a925
+
+	annotation 436ba87b-9c83-4389-a31b-ebd06a36be98 = {"Expression":""}
+

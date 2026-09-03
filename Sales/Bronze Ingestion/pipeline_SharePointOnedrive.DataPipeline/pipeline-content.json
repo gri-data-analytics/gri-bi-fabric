@@ -1,0 +1,355 @@
+{
+  "properties": {
+    "activities": [
+      {
+        "type": "Lookup",
+        "typeProperties": {
+          "source": {
+            "type": "ExcelSource",
+            "storeSettings": {
+              "type": "StoreReadSettings",
+              "recursive": true,
+              "enablePartitionDiscovery": false
+            }
+          },
+          "datasetSettings": {
+            "type": "Excel",
+            "typeProperties": {
+              "location": {
+                "type": "DatasetLocation",
+                "folderPath": "Documents/control_ingestion_metadata",
+                "fileName": "control_ingestion_metadata.xlsx"
+              },
+              "sheetName": "Metadata Input",
+              "firstRowAsHeader": true
+            },
+            "schema": [],
+            "externalReferences": {
+              "connection": "26bab0ff-8871-42f1-8f24-e16533698c4c"
+            },
+            "annotations": []
+          },
+          "firstRowOnly": false
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Lookup1",
+        "dependsOn": []
+      },
+      {
+        "type": "Filter",
+        "typeProperties": {
+          "items": {
+            "value": "@activity('Lookup1').output.value",
+            "type": "Expression"
+          },
+          "condition": {
+            "value": "@and(equals(item().is_active,'1'),equals(item().source,'SharePointOnedrive'))",
+            "type": "Expression"
+          }
+        },
+        "name": "Filter1",
+        "dependsOn": [
+          {
+            "activity": "Lookup1",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "ForEach",
+        "typeProperties": {
+          "isSequential": false,
+          "batchCount": 5,
+          "items": {
+            "value": "@activity('Filter1').output.value",
+            "type": "Expression"
+          },
+          "activities": [
+            {
+              "type": "TridentNotebook",
+              "typeProperties": {
+                "notebookId": "8ff38540-ae04-bc1d-4730-8a184e17d2a4",
+                "workspaceId": "00000000-0000-0000-0000-000000000000",
+                "parameters": {
+                  "pipeline_name": {
+                    "value": {
+                      "value": "@pipeline().parameters.PipelineName",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "source_file_path": {
+                    "value": {
+                      "value": "@item().source_connection",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "source_table": {
+                    "value": {
+                      "value": "@item().source_table",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "target_table": {
+                    "value": {
+                      "value": "@item().target_table",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "load_type": {
+                    "value": {
+                      "value": "@item().load_type",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  }
+                }
+              },
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureInput": false,
+                "secureOutput": false
+              },
+              "name": "excel_ingestion_notebook",
+              "dependsOn": []
+            },
+            {
+              "type": "TridentNotebook",
+              "typeProperties": {
+                "notebookId": {
+                  "value": "@item().Eventlog",
+                  "type": "Expression"
+                },
+                "workspaceId": {
+                  "value": "@item().Workspace",
+                  "type": "Expression"
+                },
+                "parameters": {
+                  "pipeline_name": {
+                    "value": {
+                      "value": "@pipeline().parameters.PipelineName",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "activity_name": {
+                    "value": "excel_ingestion_notebook",
+                    "type": "string"
+                  },
+                  "source_table": {
+                    "value": {
+                      "value": "@item().source_table",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "target_table": {
+                    "value": {
+                      "value": "@item().target_table",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "load_type": {
+                    "value": {
+                      "value": "@item().load_type",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "read_count": {
+                    "value": {
+                      "value": "@string(json(activity('excel_ingestion_notebook').output.result.exitValue).read_count)",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "write_count": {
+                    "value": {
+                      "value": "@string(json(activity('excel_ingestion_notebook').output.result.exitValue).write_count)",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "start_time": {
+                    "value": {
+                      "value": "@string(activity('excel_ingestion_notebook').output.result.metadata.runStartTime)",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "activity_start_time": {
+                    "value": {
+                      "value": "@formatDateTime(convertTimeZone(activity('excel_ingestion_notebook').output.result.metadata.runStartTime,'UTC','Sri Lanka Standard Time'),'yyyy-MM-dd hh:mm:ss tt')",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "activity_end_time": {
+                    "value": {
+                      "value": "@formatDateTime(convertTimeZone(activity('excel_ingestion_notebook').output.result.metadata.runEndTime,'UTC','Sri Lanka Standard Time'),'yyyy-MM-dd hh:mm:ss tt')",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  }
+                }
+              },
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureInput": false,
+                "secureOutput": false
+              },
+              "name": "Event_log",
+              "dependsOn": [
+                {
+                  "activity": "excel_ingestion_notebook",
+                  "dependencyConditions": [
+                    "Succeeded"
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "TridentNotebook",
+              "typeProperties": {
+                "notebookId": {
+                  "value": "@item().Errorlog",
+                  "type": "Expression"
+                },
+                "workspaceId": {
+                  "value": "@item().Workspace",
+                  "type": "Expression"
+                },
+                "parameters": {
+                  "pipeline_name": {
+                    "value": {
+                      "value": "@pipeline().parameters.PipelineName",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "activity_name": {
+                    "value": "excel_ingestion_notebook",
+                    "type": "string"
+                  },
+                  "source_table": {
+                    "value": {
+                      "value": "@item().source_table",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "target_table": {
+                    "value": {
+                      "value": "@item().target_table",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "load_type": {
+                    "value": {
+                      "value": "@item().load_type",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "error_code": {
+                    "value": {
+                      "value": "@activity('excel_ingestion_notebook').error.errorCode",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "error_message": {
+                    "value": {
+                      "value": "@activity('excel_ingestion_notebook').error.message",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "activity_start_time": {
+                    "value": {
+                      "value": "@formatDateTime(convertTimeZone(activity('excel_ingestion_notebook').output.result.metadata.runStartTime,'UTC','Sri Lanka Standard Time'),'yyyy-MM-dd hh:mm:ss tt')",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "activity_end_time": {
+                    "value": {
+                      "value": "@formatDateTime(convertTimeZone(activity('excel_ingestion_notebook').output.result.metadata.runEndTime,'UTC','Sri Lanka Standard Time'),'yyyy-MM-dd hh:mm:ss tt')",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  }
+                }
+              },
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureInput": false,
+                "secureOutput": false
+              },
+              "name": "Error_log",
+              "dependsOn": [
+                {
+                  "activity": "excel_ingestion_notebook",
+                  "dependencyConditions": [
+                    "Failed"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "name": "ForEach1",
+        "dependsOn": [
+          {
+            "activity": "Filter1",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      }
+    ],
+    "parameters": {
+      "PipelineName": {
+        "type": "string",
+        "defaultValue": "pipeline_SharePointOnedrive"
+      }
+    },
+    "variables": {
+      "read_count": {
+        "type": "String"
+      },
+      "write_count": {
+        "type": "String"
+      },
+      "activity_start_time": {
+        "type": "String"
+      },
+      "activity_end_time": {
+        "type": "String"
+      },
+      "source_table_name": {
+        "type": "String"
+      }
+    }
+  }
+}

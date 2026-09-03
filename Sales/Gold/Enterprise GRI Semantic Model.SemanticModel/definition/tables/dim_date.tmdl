@@ -1,0 +1,175 @@
+table dim_date
+	lineageTag: efba2cc0-2f7d-4b46-ae93-c28e4b5ce941
+	sourceLineageTag: [gold].[dim_date]
+
+	column Date
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 6655d57a-d2f7-451b-bea6-068a2df5cbdb
+		sourceLineageTag: Date
+		summarizeBy: none
+		sourceColumn: Date
+
+		annotation SummarizationSetBy = Automatic
+
+	column Year
+		dataType: int64
+		formatString: 0
+		lineageTag: 14ae3b75-f013-44f1-b27e-d2c404b97e2f
+		sourceLineageTag: Year
+		summarizeBy: sum
+		sourceColumn: Year
+
+		annotation SummarizationSetBy = Automatic
+
+	column Quarter
+		dataType: int64
+		formatString: 0
+		lineageTag: d3daba71-e3d4-49f7-ba72-86410a4b1c4c
+		sourceLineageTag: Quarter
+		summarizeBy: sum
+		sourceColumn: Quarter
+
+		annotation SummarizationSetBy = Automatic
+
+	column QuarterName
+		dataType: string
+		lineageTag: 78752ab8-42cf-428c-b48d-4d17ced50f6f
+		sourceLineageTag: QuarterName
+		summarizeBy: none
+		sourceColumn: QuarterName
+
+		annotation SummarizationSetBy = Automatic
+
+	column Month
+		dataType: int64
+		formatString: 0
+		lineageTag: 7fe19b41-7a43-430e-bdd1-56e24dfc1562
+		sourceLineageTag: Month
+		summarizeBy: sum
+		sourceColumn: Month
+
+		annotation SummarizationSetBy = Automatic
+
+	column MonthName
+		dataType: string
+		lineageTag: 67828e0f-0cbf-416f-af77-b648dc225133
+		sourceLineageTag: MonthName
+		summarizeBy: none
+		sourceColumn: MonthName
+
+		annotation SummarizationSetBy = Automatic
+
+	column MonthShort
+		dataType: string
+		lineageTag: ee6c5416-cb79-4e61-97e2-5f26740acdc9
+		sourceLineageTag: MonthShort
+		summarizeBy: none
+		sourceColumn: MonthShort
+
+		annotation SummarizationSetBy = Automatic
+
+	column MonthYearLabel
+		dataType: string
+		lineageTag: 69a0ed4d-dcc0-4bf3-b686-6b689869fffa
+		sourceLineageTag: MonthYearLabel
+		summarizeBy: none
+		sourceColumn: MonthYearLabel
+
+		annotation SummarizationSetBy = Automatic
+
+	column YearMonth
+		dataType: string
+		lineageTag: 44c47a78-2ea8-470f-afff-d28eae254d71
+		sourceLineageTag: YearMonth
+		summarizeBy: none
+		sourceColumn: YearMonth
+
+		annotation SummarizationSetBy = Automatic
+
+	column MonthStartDate
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 44d14c3a-0264-4696-a174-ab2b8626b73b
+		sourceLineageTag: MonthStartDate
+		summarizeBy: none
+		sourceColumn: MonthStartDate
+
+		annotation SummarizationSetBy = Automatic
+
+	column Day
+		dataType: int64
+		formatString: 0
+		lineageTag: af258ac0-8dec-47c7-bcb0-96446a84fcef
+		sourceLineageTag: Day
+		summarizeBy: sum
+		sourceColumn: Day
+
+		annotation SummarizationSetBy = Automatic
+
+	column DayOfWeek
+		dataType: int64
+		formatString: 0
+		lineageTag: 6f316abf-9e8a-4f30-9ec3-b9bf7ca4bdb8
+		sourceLineageTag: DayOfWeek
+		summarizeBy: sum
+		sourceColumn: DayOfWeek
+
+		annotation SummarizationSetBy = Automatic
+
+	column DayName
+		dataType: string
+		lineageTag: cf258516-1fb4-4535-8365-55b2e572393a
+		sourceLineageTag: DayName
+		summarizeBy: none
+		sourceColumn: DayName
+
+		annotation SummarizationSetBy = Automatic
+
+	column WeekOfYear
+		dataType: int64
+		formatString: 0
+		lineageTag: b6f1984a-fcbe-4039-b9b8-f692374fa4e8
+		sourceLineageTag: WeekOfYear
+		summarizeBy: sum
+		sourceColumn: WeekOfYear
+
+		annotation SummarizationSetBy = Automatic
+
+	column IsWeekend
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 9dfc3e94-db8c-466e-9fc3-cb26824fe619
+		sourceLineageTag: IsWeekend
+		summarizeBy: none
+		sourceColumn: IsWeekend
+
+		annotation SummarizationSetBy = Automatic
+
+	column FiscalYear
+		dataType: int64
+		formatString: 0
+		lineageTag: 2cf03e05-f95a-4fba-a996-b07d298980b5
+		sourceLineageTag: FiscalYear
+		summarizeBy: sum
+		sourceColumn: FiscalYear
+
+		annotation SummarizationSetBy = Automatic
+
+	column FiscalQuarter
+		dataType: int64
+		formatString: 0
+		lineageTag: 91b18aa6-d4a5-45c5-8e46-da57e0704079
+		sourceLineageTag: FiscalQuarter
+		summarizeBy: sum
+		sourceColumn: FiscalQuarter
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_date = entity
+		mode: directLake
+		source
+			entityName: dim_date
+			schemaName: gold
+			expressionSource: 'DirectLake - LH_Param_Demo'
+

@@ -1,0 +1,66 @@
+{
+  "properties": {
+    "jobMode": "Batch",
+    "source": {
+      "type": "OracleTable",
+      "connectionSettings": {
+        "type": "Oracle",
+        "externalReferences": {
+          "connection": "67a2a451-5997-4aa6-8b1d-0e37e9ef1d42"
+        }
+      }
+    },
+    "destination": {
+      "type": "LakehouseTable",
+      "connectionSettings": {
+        "type": "Lakehouse",
+        "typeProperties": {
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "artifactId": "1677636c-0f2c-b11b-4254-b321086407fd",
+          "rootFolder": "Tables"
+        }
+      }
+    },
+    "policy": {
+      "timeout": "0.12:00:00",
+      "retry": 0
+    }
+  },
+  "activities": [
+    {
+      "id": "2ee27298-af42-4604-b07f-f902fc7dba24",
+      "properties": {
+        "source": {
+          "datasetSettings": {
+            "querySettings": {
+              "queryName": "PBI Invoice value(IFS) Ingestion",
+              "query": "SELECT\r\n    cf$_invoice_date                                          AS invoice_date,\r\n    cf$_customer_code                                         AS customer,\r\n    SUM(cf$_weight)                                           AS weight,\r\n    decode(cf$_item_type, 'SOLID', 'ST1', 'PNEUMATIC', 'ST3') AS bu,\r\n    cf$_brand                                                 AS itembrand,\r\n    SUM(cf$_usd_val_ori_cus)                                  AS usd_value,\r\n    null as InventoryID\r\nFROM\r\n    ifsapp.dwc_invoices_data_bi_clt\r\nWHERE\r\n    cf$_invoice_date > '01-May-2023'\r\nGROUP BY\r\n    cf$_customer_code,\r\n    cf$_invoice_date,\r\n    cf$_item_type,\r\n    cf$_brand\r\nUNION ALL\r\nSELECT\r\n    a.invoice_date,\r\n    a.cf$_c_shipment_customer                                         AS customer,\r\n    SUM(a.cf$_net_weight)                                             AS weight,\r\n    decode(a.cf$_c_com_item_type, 'Solid', 'ST1', 'Pneumatic', 'ST3') AS bu,\r\n    a.cf$_brand_description                                           AS itembrand,\r\n    SUM(a.cf$_net_dom_amount)                                         AS usd_value,\r\n    a.CATALOG_NO as InventoryID\r\nFROM\r\n    ifsapp.customer_order_inv_join_cfv a\r\n    LEFT OUTER JOIN ifsinfo.dwc_active_prices   b ON a.cf$_c_shipment_customer = b.customer_no\r\n                                                   AND a.catalog_no = b.catalog_no\r\nWHERE\r\n        a.company = 'GRISL'\r\n    AND a.client_state NOT IN ( 'Cancelled', 'Preliminary' )\r\n    AND a.cf$_weight IS NOT NULL\r\n    AND a.cf$_c_shipment_customer <> 'CS0286'\r\n    AND a.series_id NOT IN ( (\r\n        SELECT\r\n            a.series_id\r\n        FROM\r\n            ifsapp.customer_order_inv_join_cfv\r\n        WHERE\r\n                a.series_id = 'CR'\r\n            AND a.cf$_shipment_id IS NOT NULL\r\n    ) )\r\n    AND a.invoice_date > '01-May-2023'\r\n    AND cf$_country = 'SRI LANKA'\r\n    \r\nGROUP BY\r\n    a.cf$_c_shipment_customer,\r\n    a.invoice_date,\r\n    a.cf$_c_com_item_type,\r\n    a.cf$_brand_description, a.CATALOG_NO\r\n    \r\nUNION ALL\r\n\r\nselect\r\n a.invoice_date,\r\n    a.cf$_c_shipment_customer                                         AS customer,\r\n    SUM(a.cf$_net_weight)                                             AS weight,\r\n    decode(a.cf$_c_com_item_type, 'Solid', 'ST1', 'Pneumatic', 'ST3') AS bu,\r\n    a.cf$_brand_description                                           AS itembrand,\r\n    SUM(a.cf$_net_dom_amount)                                         AS usd_value,\r\n    a.CATALOG_NO as InventoryID\r\n \r\n \r\nfrom ifsapp.CUSTOMER_ORDER_INV_JOIN_CFV a\r\nwhere \r\na.COMPANY = 'DWCLLC' and a.CONTRACT = 'DWC50' and\r\na.CF$_ITEM_TYPE is not null and a.SERIES_ID = 'CD' and a.IDENTITY not in ('CS0286','CS0193','CS0197')\r\nAND a.invoice_date > '31-Mar-2025'\r\n\r\nGROUP BY\r\n    a.cf$_c_shipment_customer,\r\n    a.invoice_date,\r\n    a.cf$_c_com_item_type,\r\n    a.cf$_brand_description, a.CATALOG_NO\r\n    \r\nUNION ALL\r\n\r\nselect\r\n a.invoice_date,\r\n    a.cf$_c_shipment_customer                                         AS customer,\r\n    SUM(a.cf$_net_weight)                                             AS weight,\r\n    decode(a.cf$_c_com_item_type, 'Solid', 'ST1', 'Pneumatic', 'ST3') AS bu,\r\n    a.cf$_brand_description                                           AS itembrand,\r\n    SUM(a.cf$_net_dom_amount)                                         AS usd_value,\r\n    a.CATALOG_NO as InventoryID\r\n \r\n \r\nfrom ifsapp.CUSTOMER_ORDER_INV_JOIN_CFV a\r\nwhere \r\na.COMPANY = 'GRISL' and a.CONTRACT = 'GRI01' and\r\na.CF$_ITEM_TYPE is not null and a.SERIES_ID = 'CD' and ifsapp.shipment_api.Get_Ship_Addr_No(a.CF$_SHIPMENT_ID) = 'CS0084'  \r\nAND a.invoice_date > '31-Mar-2025'\r\n\r\nGROUP BY\r\n    a.cf$_c_shipment_customer,\r\n    a.invoice_date,\r\n    a.cf$_c_com_item_type,\r\n    a.cf$_brand_description, a.CATALOG_NO"
+            }
+          },
+          "partitionSettings": {
+            "partitionOption": "None"
+          }
+        },
+        "destination": {
+          "partitionOption": "None",
+          "writeBehavior": "Overwrite",
+          "datasetSettings": {
+            "schema": "bronze",
+            "table": "bronze_ifs_PBI Invoice value"
+          },
+          "applyVOrder": false
+        },
+        "enableStaging": false,
+        "translator": {
+          "type": "TabularTranslator"
+        },
+        "typeConversionSettings": {
+          "typeConversion": {
+            "allowDataTruncation": true,
+            "treatBooleanAsNumber": false
+          }
+        }
+      }
+    }
+  ]
+}

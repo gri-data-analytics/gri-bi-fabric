@@ -1,0 +1,94 @@
+table fact_budget
+	lineageTag: a50dfafa-5d1c-40be-96f4-92ae02f5fe82
+	sourceLineageTag: [gold].[fact_budget]
+
+	column Customer_ID
+		dataType: string
+		lineageTag: 8f6c5316-551c-4fd1-8cae-1a9cf3a24441
+		sourceLineageTag: Customer_ID
+		summarizeBy: none
+		sourceColumn: Customer_ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column Budget_Month
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 9aa651b0-ac69-4567-b580-504375127ff6
+		sourceLineageTag: Budget_Month
+		summarizeBy: none
+		sourceColumn: Budget_Month
+
+		annotation SummarizationSetBy = Automatic
+
+	column Budget_Weight
+		dataType: double
+		lineageTag: db77dc37-7150-4ff3-9b06-59925163beb2
+		sourceLineageTag: Budget_Weight
+		summarizeBy: sum
+		sourceColumn: Budget_Weight
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Sales_Budget_Amount
+		dataType: double
+		lineageTag: 2cec1ec7-7176-4036-8238-9162cb3c9aa4
+		sourceLineageTag: Sales_Budget_Amount
+		summarizeBy: sum
+		sourceColumn: Sales_Budget_Amount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Business_Unit
+		dataType: string
+		lineageTag: 33e0abc4-0e3b-4f01-9e45-49e29de8b02f
+		sourceLineageTag: Business_Unit
+		summarizeBy: none
+		sourceColumn: Business_Unit
+
+		annotation SummarizationSetBy = Automatic
+
+	column Sales_BudAmt_k
+		dataType: double
+		lineageTag: d9fe920d-e2eb-43b4-b13f-a5adccd4f6a9
+		sourceLineageTag: Sales_BudAmt_k
+		summarizeBy: sum
+		sourceColumn: Sales_BudAmt_k
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Weight_MT
+		dataType: double
+		lineageTag: ceffce45-771c-4e35-9921-23e80f301a01
+		sourceLineageTag: Weight_MT
+		summarizeBy: sum
+		sourceColumn: Weight_MT
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Zero_Logic
+		dataType: double
+		lineageTag: 5778c4bd-5046-4852-b548-f87bab89e891
+		sourceLineageTag: Zero_Logic
+		summarizeBy: sum
+		sourceColumn: Zero_Logic
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition fact_budget = entity
+		mode: directLake
+		source
+			entityName: fact_budget
+			schemaName: gold
+			expressionSource: 'DirectLake - LH_Param_Demo'
+

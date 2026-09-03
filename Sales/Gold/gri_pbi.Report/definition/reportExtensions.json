@@ -1,0 +1,94 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/reportExtension/1.0.0/schema.json",
+  "name": "extension",
+  "entities": [
+    {
+      "name": "_Measures",
+      "measures": [
+        {
+          "name": "Tooltip Region",
+          "dataType": "Double",
+          "expression": "\nSELECTEDVALUE('dim_customer'[Region])"
+        },
+        {
+          "name": "Tooltip Sales",
+          "dataType": "Double",
+          "expression": "\nSUM( fact_invoice[Total_Amount] )",
+          "formatString": "\\$#,0.###############;(\\$#,0.###############);\\$#,0.###############"
+        },
+        {
+          "name": "Tooltip Customer Count",
+          "dataType": "Double",
+          "expression": "\nDISTINCTCOUNT(dim_customer[Customer_ID])"
+        },
+        {
+          "name": "Sales Growth %%%",
+          "dataType": "Integer",
+          "expression": "\nVAR CurrentPeriodSales = SUM ( fact_invoice[Line_Amount] )\nVAR PreviousPeriodSales =\n    CALCULATE (\n        SUM ( fact_invoice[Line_Amount] ),\n        DATEADD ( Dim_Date[Date], -1, MONTH )\n    )\nRETURN\nIF (\n    ISBLANK ( PreviousPeriodSales ) || PreviousPeriodSales = 0,\n    BLANK (),\n    ( CurrentPeriodSales - PreviousPeriodSales ) / PreviousPeriodSales\n)"
+        },
+        {
+          "name": "Customer Count",
+          "dataType": "Double",
+          "expression": "\nDISTINCTCOUNT(dim_customer[Customer_ID])",
+          "formatString": "General Number"
+        },
+        {
+          "name": "Customer Count LY",
+          "dataType": "Double",
+          "expression": "\nCALCULATE(\n    [Customer Count],\n    SAMEPERIODLASTYEAR(dim_date[Date])\n)",
+          "formatString": "General Number",
+          "references": {
+            "measures": [
+              {
+                "schema": "extension",
+                "entity": "_Measures",
+                "name": "Customer Count"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Customer Growth %",
+          "dataType": "Double",
+          "expression": "\nDIVIDE(\n    [Customer Count] - [Customer Count LY],\n    [Customer Count LY],\n    0\n)",
+          "formatString": "General Number",
+          "references": {
+            "measures": [
+              {
+                "schema": "extension",
+                "entity": "_Measures",
+                "name": "Customer Count"
+              },
+              {
+                "schema": "extension",
+                "entity": "_Measures",
+                "name": "Customer Count LY"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Customer Growth Indicator",
+          "dataType": "Double",
+          "expression": "\nIF(\n    [Customer Growth %] >= 0,\n    \"▲ \" & FORMAT([Customer Growth %], \"0.0%\"),\n    \"▼ \" & FORMAT([Customer Growth %], \"0.0%\")\n)",
+          "formatString": "General Number",
+          "references": {
+            "measures": [
+              {
+                "schema": "extension",
+                "entity": "_Measures",
+                "name": "Customer Growth %"
+              }
+            ]
+          }
+        },
+        {
+          "name": "LY Text",
+          "dataType": "Double",
+          "expression": "\"vs LY\"",
+          "formatString": "General Number"
+        }
+      ]
+    }
+  ]
+}

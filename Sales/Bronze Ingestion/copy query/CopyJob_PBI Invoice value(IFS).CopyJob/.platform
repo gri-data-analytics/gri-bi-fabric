@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "CopyJob",
+    "displayName": "CopyJob_PBI Invoice value(IFS)"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "1e80c938-8f3e-8d29-499e-ede603565fc0"
+  }
+}

@@ -1,0 +1,38 @@
+table dim_product
+	lineageTag: 0cc62c42-f263-4fd8-8477-9fb74f94551b
+	sourceLineageTag: [gold].[dim_product]
+
+	column InventoryID
+		dataType: string
+		lineageTag: 6933dfb1-6229-4aeb-962d-edd9f33929c9
+		sourceLineageTag: InventoryID
+		summarizeBy: none
+		sourceColumn: InventoryID
+
+		annotation SummarizationSetBy = Automatic
+
+	column ItemBrand
+		dataType: string
+		lineageTag: 41e7e056-0faa-4388-89a0-1a24118eb2a4
+		sourceLineageTag: ItemBrand
+		summarizeBy: none
+		sourceColumn: ItemBrand
+
+		annotation SummarizationSetBy = Automatic
+
+	column Description
+		dataType: string
+		lineageTag: 23635a53-4736-4d34-a46d-c674cd1aeaf6
+		sourceLineageTag: Description
+		summarizeBy: none
+		sourceColumn: Description
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_product = entity
+		mode: directLake
+		source
+			entityName: dim_product
+			schemaName: gold
+			expressionSource: 'DirectLake - LH_Param_Demo'
+

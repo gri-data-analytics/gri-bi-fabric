@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "name": "Documents",
+    "path": "/Files",
+    "target": {
+      "type": "OneDriveSharePoint",
+      "oneDriveSharePoint": {
+        "connectionId": "26bab0ff-8871-42f1-8f24-e16533698c4c",
+        "location": "https://globalgroupsl-my.sharepoint.com",
+        "subpath": "/personal/powerbiadmin3_gritires_com/Documents"
+      }
+    }
+  }
+]

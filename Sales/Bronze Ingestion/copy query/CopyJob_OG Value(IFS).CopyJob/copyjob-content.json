@@ -1,0 +1,66 @@
+{
+  "properties": {
+    "jobMode": "Batch",
+    "source": {
+      "type": "OracleTable",
+      "connectionSettings": {
+        "type": "Oracle",
+        "externalReferences": {
+          "connection": "67a2a451-5997-4aa6-8b1d-0e37e9ef1d42"
+        }
+      }
+    },
+    "destination": {
+      "type": "LakehouseTable",
+      "connectionSettings": {
+        "type": "Lakehouse",
+        "typeProperties": {
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "artifactId": "1677636c-0f2c-b11b-4254-b321086407fd",
+          "rootFolder": "Tables"
+        }
+      }
+    },
+    "policy": {
+      "timeout": "0.12:00:00",
+      "retry": 0
+    }
+  },
+  "activities": [
+    {
+      "id": "9d1a15b9-9594-4bf6-a9b5-6b801db09d68",
+      "properties": {
+        "source": {
+          "datasetSettings": {
+            "querySettings": {
+              "queryName": "OG Value (IFS) Ingestion",
+              "query": "SELECT\r\n    trunc(a.date_entered)                                                                                 AS \"DATE\",\r\n    a.order_no,\r\n    a.customer_no,\r\n    ifsapp.customer_info_api.get_name(a.customer_no)                                                            \r\n    AS name_ ,\r\n    ifsapp.sales_region_api.get_description(ifsapp.cust_ord_customer_address_api.get_region_code(cus.customer_id, '1'))\r\n    AS region ,\r\n    a.line_total_weight                                                                                   AS weight_,\r\n    decode(a.cf$_item_type, 'PNEUMATIC', 'ST3','SOLID','ST1')                                                           AS cf$_item_type,\r\n    a.catalog_no,\r\n    a.state,\r\n    cus.country ,\r\n    ifsapp.customer_order_line_api.get_base_sale_price_total(a.order_no, a.line_no, a.rel_no, a.line_item_no)   \r\n    AS usd_val \r\nFROM\r\n    ifsapp.customer_order_line_cfv a\r\n    LEFT OUTER JOIN ifsinfo.dwc_active_prices      b ON a.customer_no = b.customer_no\r\n                                                   AND a.catalog_no = b.catalog_no,\r\n    ifsapp.customer_info_cfv              cus\r\nWHERE\r\n        cus.customer_id = a.customer_no\r\n    AND a.company = 'GRISL'\r\n   AND a.contract = 'GRI01'\r\n    AND a.cf$_item_type = 'PNEUMATIC'\r\n    AND a.catalog_type_db <> 'PKG'\r\n    AND a.part_no LIKE 'P%'\r\n    AND a.state <> 'Cancelled'\r\n    AND a.customer_no <> 'CS0286'"
+            }
+          },
+          "partitionSettings": {
+            "partitionOption": "None"
+          }
+        },
+        "destination": {
+          "partitionOption": "None",
+          "writeBehavior": "Overwrite",
+          "datasetSettings": {
+            "schema": "bronze",
+            "table": "bronze_ifs_OG Value"
+          },
+          "applyVOrder": false
+        },
+        "enableStaging": false,
+        "translator": {
+          "type": "TabularTranslator"
+        },
+        "typeConversionSettings": {
+          "typeConversion": {
+            "allowDataTruncation": true,
+            "treatBooleanAsNumber": false
+          }
+        }
+      }
+    }
+  ]
+}

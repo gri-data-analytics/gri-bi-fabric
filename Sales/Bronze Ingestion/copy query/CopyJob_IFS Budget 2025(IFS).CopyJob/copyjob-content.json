@@ -1,0 +1,66 @@
+{
+  "properties": {
+    "jobMode": "Batch",
+    "source": {
+      "type": "OracleTable",
+      "connectionSettings": {
+        "type": "Oracle",
+        "externalReferences": {
+          "connection": "67a2a451-5997-4aa6-8b1d-0e37e9ef1d42"
+        }
+      }
+    },
+    "destination": {
+      "type": "LakehouseTable",
+      "connectionSettings": {
+        "type": "Lakehouse",
+        "typeProperties": {
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "artifactId": "1677636c-0f2c-b11b-4254-b321086407fd",
+          "rootFolder": "Tables"
+        }
+      }
+    },
+    "policy": {
+      "timeout": "0.12:00:00",
+      "retry": 0
+    }
+  },
+  "activities": [
+    {
+      "id": "38789e96-9c04-46d8-910c-77668ebe9576",
+      "properties": {
+        "source": {
+          "datasetSettings": {
+            "querySettings": {
+              "queryName": "IFS Budget 2025(IFS) Ingestion",
+              "query": "select\r\na.code_c as Customer_ID,\r\na.code_c_desc as Customer_Name,\r\nTO_DATE(\r\n        CASE \r\n            WHEN a.budget_period >= 10 THEN \r\n                (a.budget_year + 1) || '-' || (a.budget_period - 9)\r\n            ELSE \r\n                a.budget_year || '-' || (a.budget_period + 3)\r\n        END,\r\n        'YYYY-MM'\r\n    ) AS Month,\r\na.quantity as SalesBud,\r\na.code_b as BU,\r\na.amount as SalesBudAmt\r\nfrom\r\n\r\nifsapp.BUDGET_PERIOD_AMOUNT1 a\r\n\r\nwhere\r\na.company = 'GRISL' and a.budget_year = '2025' and a.budget_version = 'SALESTAR'"
+            }
+          },
+          "partitionSettings": {
+            "partitionOption": "None"
+          }
+        },
+        "destination": {
+          "partitionOption": "None",
+          "writeBehavior": "Overwrite",
+          "datasetSettings": {
+            "schema": "bronze",
+            "table": "bronze_ifs_IFS Budget 2025"
+          },
+          "applyVOrder": false
+        },
+        "enableStaging": false,
+        "translator": {
+          "type": "TabularTranslator"
+        },
+        "typeConversionSettings": {
+          "typeConversion": {
+            "allowDataTruncation": true,
+            "treatBooleanAsNumber": false
+          }
+        }
+      }
+    }
+  ]
+}

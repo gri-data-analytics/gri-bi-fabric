@@ -1,0 +1,66 @@
+{
+  "properties": {
+    "jobMode": "Batch",
+    "source": {
+      "type": "OracleTable",
+      "connectionSettings": {
+        "type": "Oracle",
+        "externalReferences": {
+          "connection": "67a2a451-5997-4aa6-8b1d-0e37e9ef1d42"
+        }
+      }
+    },
+    "destination": {
+      "type": "LakehouseTable",
+      "connectionSettings": {
+        "type": "Lakehouse",
+        "typeProperties": {
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "artifactId": "1677636c-0f2c-b11b-4254-b321086407fd",
+          "rootFolder": "Tables"
+        }
+      }
+    },
+    "policy": {
+      "timeout": "0.12:00:00",
+      "retry": 0
+    }
+  },
+  "activities": [
+    {
+      "id": "248be4cb-008f-470f-9c0c-86838daf6d3f",
+      "properties": {
+        "source": {
+          "datasetSettings": {
+            "querySettings": {
+              "queryName": "Missing_Cus_All(IFS) Ingestion",
+              "query": "SELECT DISTINCT\r\n    a.customer_id           AS custometid,\r\n    a.name                  AS customername,\r\n    CASE\r\n        WHEN a.customer_id = 'CS0263' THEN\r\n            'ASIA PACIFIC'\r\n        ELSE\r\n            b.cf$_region_description\r\n    END                     AS region,\r\n    a.country               AS countryname,\r\n    a.cf$_customer_category AS customersegment\r\nFROM\r\n    ifsapp.customer_info_cfv a\r\n    LEFT JOIN (\r\n        SELECT DISTINCT\r\n            identity,\r\n            cf$_region_description\r\n        FROM\r\n            ifsapp.customer_order_inv_join_cfv\r\n    )                 b ON a.customer_id = b.identity\r\nWHERE\r\n    a.customer_id IN ( 'CS0154', 'CS0174', 'CS0124', 'CS0179', 'CS0035',\r\n                       'CS0153', 'CS0211', 'CS0026', 'CS0088', 'CS0160',\r\n                       'CS0230', 'CS0239', 'GRI50', 'CS0121', 'CS0142',\r\n                       'CS0039', 'CS0194', 'CS0203', 'CS0169', 'CS0009',\r\n                       'CS0099', 'CS0073', 'CS0044', 'CS0091', 'CS0092',\r\n                       'CS0030', 'CS0007', 'CS0093', 'CS0101', 'CS0045',\r\n                       'CS0133', 'CS0135', 'CS0037', 'CS0156', 'CS0061',\r\n                       'CS0173', 'CS0076', 'CS0195', 'CS0196', 'CS0199',\r\n                       'CS0209', 'CS0213', 'CS0215', 'CS0226', 'CS0235',\r\n                       'CS0237', 'CS0257', 'CS0263', 'CS0265','GRI51' ,'CS0014','CS0082','CS0021','CS0067','CS0068','CS0002','CS0116','CS0120','CS0040','CS0098','CS0132','CS0138','CS0130','CS0144','CS0069','CS0149','CS0152','CS0140','CS0157','CS0158','CS0178','CS0180','CS0187','CS0191','CS0163','CS0202','CS0206','CS0205','CS0216','CS0190','CS0225','CS0263'\r\n)\r\n    AND a.cf$_customer_category IS NOT NULL\r\n    and  b.cf$_region_description is not null"
+            }
+          },
+          "partitionSettings": {
+            "partitionOption": "None"
+          }
+        },
+        "destination": {
+          "partitionOption": "None",
+          "writeBehavior": "Overwrite",
+          "datasetSettings": {
+            "schema": "bronze",
+            "table": "bronze_ifs_Missing_Cus_All"
+          },
+          "applyVOrder": false
+        },
+        "enableStaging": false,
+        "translator": {
+          "type": "TabularTranslator"
+        },
+        "typeConversionSettings": {
+          "typeConversion": {
+            "allowDataTruncation": true,
+            "treatBooleanAsNumber": false
+          }
+        }
+      }
+    }
+  ]
+}

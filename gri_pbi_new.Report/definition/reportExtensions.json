@@ -1,0 +1,309 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/reportExtension/1.0.0/schema.json",
+  "name": "extension",
+  "entities": [
+    {
+      "name": "_Measures",
+      "measures": [
+        {
+          "name": "Tooltip Region",
+          "dataType": "Double",
+          "expression": "\nSELECTEDVALUE('dim_customer'[Region])"
+        },
+        {
+          "name": "Tooltip Sales",
+          "dataType": "Double",
+          "expression": "\nSUM( fact_invoice[Total_Amount] )",
+          "formatString": "\\$#,0.###############;(\\$#,0.###############);\\$#,0.###############"
+        },
+        {
+          "name": "Tooltip Customer Count",
+          "dataType": "Double",
+          "expression": "\nDISTINCTCOUNT(dim_customer[Customer_ID])"
+        },
+        {
+          "name": "Sales Growth %%%",
+          "dataType": "Integer",
+          "expression": "\nVAR CurrentPeriodSales = SUM ( fact_invoice[Invoice_Value] )\nVAR PreviousPeriodSales =\n    CALCULATE (\n        SUM ( fact_invoice[Invoice_Value] ),\n        DATEADD ( Dim_Date[Date], -1, MONTH )\n    )\nRETURN\nIF (\n    ISBLANK ( PreviousPeriodSales ) || PreviousPeriodSales = 0,\n    BLANK (),\n    ( CurrentPeriodSales - PreviousPeriodSales ) / PreviousPeriodSales\n)",
+          "formatString": "0\\ %;-0\\ %;0\\ %"
+        },
+        {
+          "name": "Customer Count",
+          "dataType": "Double",
+          "expression": "\nDISTINCTCOUNT(dim_customer[Customer_ID])"
+        },
+        {
+          "name": "Customer Count LY",
+          "dataType": "Double",
+          "expression": "\nCALCULATE(\n    [Customer Count],\n    SAMEPERIODLASTYEAR(dim_date[Date])\n)",
+          "references": {
+            "measures": [
+              {
+                "schema": "extension",
+                "entity": "_Measures",
+                "name": "Customer Count"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Customer Growth %",
+          "dataType": "Double",
+          "expression": "\r\nDIVIDE(\r\n    [Customer Count] - [Customer Count LY],\r\n    [Customer Count LY],0\r\n) ",
+          "references": {
+            "measures": [
+              {
+                "schema": "extension",
+                "entity": "_Measures",
+                "name": "Customer Count"
+              },
+              {
+                "schema": "extension",
+                "entity": "_Measures",
+                "name": "Customer Count LY"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Customer Growth Indicator",
+          "dataType": "Double",
+          "expression": "\nIF(\n    [Customer Growth %] >= 0,\n    \"▲ \" & FORMAT([Customer Growth %], \"0.0%\"),\n    \"▼ \" & FORMAT([Customer Growth %], \"0.0%\")\n)",
+          "references": {
+            "measures": [
+              {
+                "schema": "extension",
+                "entity": "_Measures",
+                "name": "Customer Growth %"
+              }
+            ]
+          }
+        },
+        {
+          "name": "LY Text",
+          "dataType": "Double",
+          "expression": "\"vs LY\""
+        },
+        {
+          "name": "Actual Sales",
+          "dataType": "Double",
+          "expression": "\nSUM(fact_invoice[Invoice_Value])",
+          "formatString": "General Number"
+        },
+        {
+          "name": "Budget Sales",
+          "dataType": "Double",
+          "expression": "\nSUM(fact_budget[Sales_Budget_Amount])",
+          "formatString": "General Number"
+        },
+        {
+          "name": "Achievement %",
+          "dataType": "Double",
+          "expression": "\nDIVIDE(\n    [Actual Sales],\n    [Budget Sales],\n    0\n)",
+          "formatString": "0.00\\ %;-0.00\\ %;0.00\\ %",
+          "references": {
+            "measures": [
+              {
+                "schema": "extension",
+                "entity": "_Measures",
+                "name": "Actual Sales"
+              },
+              {
+                "schema": "extension",
+                "entity": "_Measures",
+                "name": "Budget Sales"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Gauge Min",
+          "dataType": "Double",
+          "expression": "0",
+          "formatString": "0.0\\ %;-0.0\\ %;0.0\\ %"
+        },
+        {
+          "name": "Gauge Max",
+          "dataType": "Double",
+          "expression": "1.5",
+          "formatString": "0.0\\ %;-0.0\\ %;0.0\\ %"
+        },
+        {
+          "name": "Gauge Target",
+          "dataType": "Double",
+          "expression": "1",
+          "formatString": "0\\ %;-0\\ %;0\\ %"
+        },
+        {
+          "name": "Sales LY NEW",
+          "dataType": "Double",
+          "expression": "\r\nCALCULATE(\r\n    [Actual Sales],\r\n    SAMEPERIODLASTYEAR('dim_date'[Date])\r\n)",
+          "formatString": "General Number",
+          "references": {
+            "measures": [
+              {
+                "schema": "extension",
+                "entity": "_Measures",
+                "name": "Actual Sales"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Sales Growth NEW %",
+          "dataType": "Double",
+          "expression": "\r\nDIVIDE(\r\n    [Actual Sales] - [Sales LY NEW],\r\n    [Sales)",
+          "formatString": "General Number",
+          "references": {
+            "measures": [
+              {
+                "schema": "extension",
+                "entity": "_Measures",
+                "name": "Actual Sales"
+              },
+              {
+                "schema": "extension",
+                "entity": "_Measures",
+                "name": "Sales LY NEW"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Gross Profit",
+          "dataType": "Double",
+          "expression": "\r\nSUM(fact_invoice[Invoice_Value])\r\n -\r\nSUM(fact_invoice[Freight_Cost])",
+          "formatString": "General Number"
+        },
+        {
+          "name": "GP LY",
+          "dataType": "Double",
+          "expression": "\r\nCALCULATE(\r\n   [Gross Profit],\r\n   SAMEPERIODLASTYEAR('dim_date'[Date])\r\n)",
+          "formatString": "General Number",
+          "references": {
+            "measures": [
+              {
+                "schema": "extension",
+                "entity": "_Measures",
+                "name": "Gross Profit"
+              }
+            ]
+          }
+        },
+        {
+          "name": "GP Growth %",
+          "dataType": "Double",
+          "expression": "\r\nDIVIDE(\r\n    [Gross Profit]-[GP LY],\r\n    [GP LY]\r\n)",
+          "formatString": "General Number",
+          "references": {
+            "measures": [
+              {
+                "schema": "extension",
+                "entity": "_Measures",
+                "name": "Gross Profit"
+              },
+              {
+                "schema": "extension",
+                "entity": "_Measures",
+                "name": "GP LY"
+              }
+            ]
+          }
+        },
+        {
+          "name": "GP %",
+          "dataType": "Double",
+          "expression": "\r\nDIVIDE(\r\n   [Gross Profit],\r\n   [Actual Sales]\r\n)",
+          "formatString": "General Number",
+          "references": {
+            "measures": [
+              {
+                "schema": "extension",
+                "entity": "_Measures",
+                "name": "Gross Profit"
+              },
+              {
+                "schema": "extension",
+                "entity": "_Measures",
+                "name": "Actual Sales"
+              }
+            ]
+          }
+        },
+        {
+          "name": "GP % LY",
+          "dataType": "Double",
+          "expression": "\r\nCALCULATE(\r\n    [GP %],\r\n    SAMEPERIODLASTYEAR('dim_date'[Date])\r\n)",
+          "formatString": "General Number",
+          "references": {
+            "measures": [
+              {
+                "schema": "extension",
+                "entity": "_Measures",
+                "name": "GP %"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Growth Text New",
+          "dataType": "Double",
+          "expression": "\r\nVAR Growth =\r\nFORMAT([Sales Growth %%%],\"0.00%\")\r\nRETURN\r\n\"vs LY \" &\r\n[Growth Arrow] &\r\n\" \" &\r\nGrowth",
+          "formatString": "General Number",
+          "references": {
+            "measures": [
+              {
+                "schema": "extension",
+                "entity": "_Measures",
+                "name": "Sales Growth %%%"
+              },
+              {
+                "entity": "_Measures",
+                "name": "Growth Arrow"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Data As Of",
+          "dataType": "Double",
+          "expression": "\r\n\"Data as of \" &\r\nFORMAT(\r\n    MAX('dim_date'[Date]),\r\n    \"MMM dd, yyyy\"\r\n)",
+          "formatString": "General Number"
+        },
+        {
+          "name": "Last Refreshed",
+          "dataType": "Double",
+          "expression": "\r\n\"Last refreshed: \" &\r\nFORMAT(\r\n    NOW(),\r\n    \"MMM dd, yyyy hh:mm AM/PM\"\r\n)\r\n",
+          "formatString": "General Number"
+        },
+        {
+          "name": "Filter Count",
+          "dataType": "Double",
+          "expression": "\r\nCOUNTROWS(\r\n    FILTERS(dim_date[Year])\r\n)",
+          "formatString": "General Number"
+        },
+        {
+          "name": "Active Filter Count",
+          "dataType": "Double",
+          "expression": "\r\nVAR RSM_Filter =\r\n    IF(ISFILTERED(dim_salesperson[RSM]), 1, 0)\r\n\r\nVAR Customer_Filter =\r\n    IF(ISFILTERED(dim_customer[Customer_Segment]), 1, 0)\r\n\r\nVAR Region_Filter =\r\n    IF(ISFILTERED(dim_customer[Region]), 1, 0)\r\n\r\nVAR BusinessUnit_Filter =\r\n    IF(ISFILTERED(dim_business_unit[Business_Unit]), 1, 0)\r\n\r\nVAR Currency_Filter =\r\n    IF(ISFILTERED(fact_invoice[Currency]), 1, 0)\r\n\r\nVAR Date_Filter =\r\n    IF(ISFILTERED(dim_date[Date]), 1, 0)\r\n\r\nRETURN\r\n    RSM_Filter\r\n    + Customer_Filter\r\n    + Region_Filter\r\n    + BusinessUnit_Filter\r\n    + Currency_Filter\r\n    + Date_Filter",
+          "formatString": "General Number"
+        },
+        {
+          "name": "A_Filter Button Text",
+          "dataType": "Double",
+          "expression": "\r\n\"Filters (\" & [Active Filter Count] & \")\"",
+          "formatString": "General Number",
+          "references": {
+            "measures": [
+              {
+                "schema": "extension",
+                "entity": "_Measures",
+                "name": "Active Filter Count"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

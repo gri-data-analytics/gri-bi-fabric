@@ -1,0 +1,29 @@
+table dim_business_unit
+	lineageTag: 07977fdb-f410-4d26-b989-e80c578b6c62
+	sourceLineageTag: [gold].[dim_business_unit]
+
+	column Business_Unit
+		dataType: string
+		lineageTag: 48613135-8564-44ef-b87b-4ee1eadd0a5e
+		sourceLineageTag: Business_Unit
+		summarizeBy: none
+		sourceColumn: Business_Unit
+
+		annotation SummarizationSetBy = Automatic
+
+	column Business_Unit_Name
+		dataType: string
+		lineageTag: 162909ad-ce43-4bc1-8262-e225a28d5dd5
+		sourceLineageTag: Business_Unit_Name
+		summarizeBy: none
+		sourceColumn: Business_Unit_Name
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_business_unit = entity
+		mode: directLake
+		source
+			entityName: dim_business_unit
+			schemaName: gold
+			expressionSource: 'DirectLake - LH_Param_Demo'
+

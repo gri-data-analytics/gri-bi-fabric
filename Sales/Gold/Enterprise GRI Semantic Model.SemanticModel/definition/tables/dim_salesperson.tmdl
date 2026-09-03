@@ -1,0 +1,38 @@
+table dim_salesperson
+	lineageTag: 5efb3631-5388-4225-bad6-5177f0f60d42
+	sourceLineageTag: [gold].[dim_salesperson]
+
+	column SalespersonID
+		dataType: string
+		lineageTag: 195839e5-0705-483f-ae68-1c7530d5e901
+		sourceLineageTag: SalespersonID
+		summarizeBy: none
+		sourceColumn: SalespersonID
+
+		annotation SummarizationSetBy = Automatic
+
+	column Salesperson
+		dataType: string
+		lineageTag: f4056c86-9a51-429d-ac69-99ef09107aeb
+		sourceLineageTag: Salesperson
+		summarizeBy: none
+		sourceColumn: Salesperson
+
+		annotation SummarizationSetBy = Automatic
+
+	column RSM
+		dataType: string
+		lineageTag: f85bb569-f7c8-4c11-a63f-6f0b2959b312
+		sourceLineageTag: RSM
+		summarizeBy: none
+		sourceColumn: RSM
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_salesperson = entity
+		mode: directLake
+		source
+			entityName: dim_salesperson
+			schemaName: gold
+			expressionSource: 'DirectLake - LH_Param_Demo'
+

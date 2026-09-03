@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "CopyJob",
+    "displayName": "CopyJob_IFS Budget 2025(IFS)"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "5b5b32f5-516d-94d8-4aeb-4207f4c88800"
+  }
+}

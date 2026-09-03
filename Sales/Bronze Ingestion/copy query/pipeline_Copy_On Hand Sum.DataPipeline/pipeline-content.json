@@ -1,0 +1,72 @@
+{
+  "properties": {
+    "activities": [
+      {
+        "type": "Copy",
+        "typeProperties": {
+          "source": {
+            "type": "OracleSource",
+            "oracleReaderQuery": "SELECT\n    part_no,\n    CASE \n        WHEN part_no LIKE 'P%' THEN 'Pneumatic' \n        WHEN part_no LIKE 'S%' OR part_no LIKE '3%' THEN 'Solid' \n        ELSE NULL \n    END AS Item,\nwarehouse,\nlocation_no,\n    COUNT(serial_no) AS total_qty,\n    sum(QTY_ONHAND) - sum(QTY_RESERVED)AS on_hand_qty\nFROM\n    ifsapp.inventory_part_in_stock_uiv\nWHERE\n    (warehouse IN ('RDDF', 'FG1')\n    OR location_no IN (\n        'ST1-FG-A', \n        'PMGF2', \n        'PMGF', \n        'ST3-FG-A', \n        'ST3-HL-0001-FG', \n        'ST2-FG-A', \n        'ST1-FG-A'))\n    AND (part_no LIKE 'P%' OR part_no LIKE 'S%' OR part_no LIKE '3%')\n    AND (qty_onhand > 0 OR qty_in_transit > 0)\nGROUP BY\n    part_no,\nwarehouse,\nlocation_no,\n    CASE \n        WHEN part_no LIKE 'P%' THEN 'Pneumatic' \n        WHEN part_no LIKE 'S%' OR part_no LIKE '3%' THEN 'Solid' \n        ELSE NULL \n    END",
+            "queryTimeout": "02:00:00",
+            "partitionOption": "None",
+            "numberPrecision": 38,
+            "numberScale": 18,
+            "datasetSettings": {
+              "type": "OracleTable",
+              "schema": [],
+              "externalReferences": {
+                "connection": "67a2a451-5997-4aa6-8b1d-0e37e9ef1d42"
+              },
+              "annotations": []
+            }
+          },
+          "sink": {
+            "type": "LakehouseTableSink",
+            "tableActionOption": "Append",
+            "applyVOrder": false,
+            "partitionOption": "None",
+            "datasetSettings": {
+              "type": "LakehouseTable",
+              "typeProperties": {
+                "schema": "bronze",
+                "table": "bronze_ifs_On_Hand_Sum"
+              },
+              "schema": [],
+              "linkedService": {
+                "name": "LH_Param_Demo",
+                "properties": {
+                  "type": "Lakehouse",
+                  "typeProperties": {
+                    "artifactId": "1677636c-0f2c-b11b-4254-b321086407fd",
+                    "workspaceId": "00000000-0000-0000-0000-000000000000",
+                    "rootFolder": "Tables"
+                  },
+                  "annotations": []
+                }
+              },
+              "annotations": []
+            }
+          },
+          "translator": {
+            "type": "TabularTranslator",
+            "typeConversion": true,
+            "typeConversionSettings": {
+              "allowDataTruncation": true,
+              "treatBooleanAsNumber": false
+            }
+          },
+          "enableStaging": false
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Copy On Hand Sum Query",
+        "dependsOn": []
+      }
+    ]
+  }
+}

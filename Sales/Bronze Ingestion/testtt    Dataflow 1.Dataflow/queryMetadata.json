@@ -1,0 +1,22 @@
+{
+  "formatVersion": "202502",
+  "computeEngineSettings": {
+    "allowModernEvaluationEngine": true
+  },
+  "name": "testtt    Dataflow 1",
+  "queryGroups": [],
+  "documentLocale": "en-US",
+  "queriesMetadata": {
+    "Past5YearsSalesData_All": {
+      "queryId": "de4fc08c-5c83-4bf9-ba2e-550e776790a9",
+      "queryName": "Past5YearsSalesData_All"
+    }
+  },
+  "connections": [
+    {
+      "path": "https://globalgroupsl-my.sharepoint.com/personal/fabricadmin1_gritires_com/",
+      "kind": "Web",
+      "connectionId": "{\"ClusterId\":\"4504a9a3-073f-4f7e-8334-f786f1e2298a\",\"DatasourceId\":\"b6c77823-f130-4c33-8033-282ab3c09b64\"}"
+    }
+  ]
+}
